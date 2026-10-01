@@ -1,0 +1,182 @@
+```html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Matematika III</title>
+<style>
+body{font-family:Arial;background:linear-gradient(160deg,#006eff,#00d4ff);margin:0;padding:20px}
+.card{background:white;padding:25px;border-radius:25px;max-width:550px;margin:auto;box-shadow:0 10px 30px #0003}
+input,button{width:100%;padding:15px;margin:10px 0;border-radius:15px;font-size:16px}
+input{border:2px solid #ddd}
+button{background:#006eff;color:white;border:0;font-weight:bold}
+.option{background:#eef6ff;padding:15px;border-radius:15px;margin:10px 0}
+.selected{background:#006eff;color:white}
+.hidden{display:none}
+.timer{text-align:center;font-size:35px;color:#ff5722;font-weight:bold}
+.score{text-align:center;font-size:45px;color:#006eff}
+</style>
+</head>
+<body>
+
+<div class="card" id="start">
+<h1>🎯 Quiz Matematika III</h1>
+<input id="nama" placeholder="Nama siswa">
+<input id="kelas" placeholder="Kelas (contoh 3A)">
+<button onclick="mulai()">🚀 Mulai Quiz</button>
+</div>
+
+<div class="card hidden" id="quiz">
+<h3 id="nomor"></h3>
+<div class="timer">⏳ <span id="waktu">25</span></div>
+<h2 id="soal"></h2>
+<div id="pilihan"></div>
+<button onclick="next()">Selanjutnya ➡</button>
+</div>
+
+<div class="card hidden" id="hasil">
+<h2>🎉 Quiz Selesai</h2>
+<p id="namaHasil"></p>
+<div class="score" id="nilai"></div>
+<p id="detail"></p>
+</div>
+
+<script>
+
+let bankSoal=[
+["Hasil dari 25 + 17 adalah?",["32","42","52","62"],1],
+["Hasil dari 63 - 28 adalah?",["25","35","45","55"],1],
+["Hasil dari 6 × 7 adalah?",["36","42","48","56"],1],
+["Hasil dari 48 ÷ 6 adalah?",["6","7","8","9"],2],
+["Bilangan manakah yang paling besar?",["245","254","425","452"],3],
+["Nilai tempat angka 7 pada bilangan 374 adalah?",["Satuan","Puluhan","Ratusan","Ribuan"],1],
+["Hasil dari 125 + 236 adalah?",["351","361","371","381"],1],
+["Hasil dari 500 - 175 adalah?",["315","325","335","345"],1],
+["Ibu membeli 4 bungkus pensil. Setiap bungkus berisi 6 pensil. Jumlah pensil semuanya adalah?",["10","20","24","30"],2],
+["Ada 36 permen yang dibagikan sama rata kepada 6 anak. Setiap anak mendapat?",["4","5","6","7"],2],
+["1 meter sama dengan berapa sentimeter?",["10 cm","50 cm","100 cm","1.000 cm"],2],
+["Pukul 07.00 ditambah 2 jam menjadi pukul?",["08.00","09.00","10.00","11.00"],1],
+["Bangun datar yang memiliki 4 sisi sama panjang adalah?",["Segitiga","Persegi","Lingkaran","Trapesium"],1],
+["Ani memiliki Rp10.000. Ia membeli pensil seharga Rp3.000. Sisa uang Ani adalah?",["Rp5.000","Rp6.000","Rp7.000","Rp8.000"],2],
+["Hasil dari 100 + 200 + 50 adalah?",["250","300","350","400"],2]
+];
+
+let soal=[],index=0,benar=0,jawaban=null,timer,nama="",kelas="";
+
+function mulai(){
+nama=document.getElementById("nama").value;
+kelas=document.getElementById("kelas").value;
+
+if(!nama || !kelas){
+alert("Isi nama dan kelas");
+return;
+}
+
+soal=[...bankSoal].sort(()=>Math.random()-0.5);
+
+document.getElementById("start").classList.add("hidden");
+document.getElementById("quiz").classList.remove("hidden");
+
+tampil();
+}
+
+function tampil(){
+
+jawaban=null;
+
+document.getElementById("nomor").innerHTML="Soal "+(index+1)+" / 15";
+document.getElementById("soal").innerHTML=soal[index][0];
+
+let h="";
+soal[index][1].forEach((x,i)=>{
+h+=`<div class="option" onclick="pilih(${i},this)">${x}</div>`;
+});
+
+document.getElementById("pilihan").innerHTML=h;
+
+let detik=25;
+document.getElementById("waktu").innerHTML=detik;
+
+clearInterval(timer);
+
+timer=setInterval(()=>{
+detik--;
+document.getElementById("waktu").innerHTML=detik;
+
+if(detik<=0){
+next();
+}
+
+},1000);
+
+}
+
+function pilih(i,e){
+jawaban=i;
+document.querySelectorAll(".option").forEach(x=>x.classList.remove("selected"));
+e.classList.add("selected");
+}
+
+function next(){
+
+clearInterval(timer);
+
+if(jawaban==soal[index][2]){
+benar++;
+}
+
+index++;
+
+if(index>=15){
+selesai();
+}else{
+tampil();
+}
+
+}
+
+function selesai(){
+
+let nilai=Math.round((benar/15)*100);
+
+document.getElementById("quiz").classList.add("hidden");
+document.getElementById("hasil").classList.remove("hidden");
+
+document.getElementById("namaHasil").innerHTML=
+nama+" - Kelas "+kelas;
+
+document.getElementById("nilai").innerHTML=nilai;
+
+document.getElementById("detail").innerHTML=
+"Benar "+benar+" dari 15 soal";
+
+kirimData(nilai);
+
+}
+
+
+function kirimData(nilai){
+
+fetch("https://script.google.com/macros/s/AKfycbwCPaEt-P92Ljhg-So5sQLm5sNe26i5rOo5iPViHndV4P63TMtkpnYXrmiUpn42F3PqAQ/exec",
+{
+method:"POST",
+mode:"no-cors",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+nama:nama,
+kelas:kelas,
+score:nilai,
+benar:benar,
+salah:15-benar
+})
+});
+
+}
+
+</script>
+</body>
+</html>
+```
